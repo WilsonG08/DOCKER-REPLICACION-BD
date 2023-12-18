@@ -1,41 +1,34 @@
-# todos los contenedores que vamos a ejecutar
-
-# VERSION DEL COMPOSE
 version: '3'
 
-# SERVICIOS
 services:
   mysql_master:
-  # DESCARGO LA IMAGEN
     image: mysql:latest
-  # LE DOY UN NOMBRE
     container_name: mysql_master
-  # UN PUERTO
-    ports:
-      - 3306:3306
-  # VARIABLES DE ENTORNO
+    command: --server-id=1 --log-bin=mysql-bin --binlog-do-db=replica
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: replica
-  
+    ports:
+      - "3306:3306"
+
   mysql_slave:
     image: mysql:latest
     container_name: mysql_slave
-    ports:
-      - 3307:3307
+    command: --server-id=2 --log-bin=mysql-bin --binlog-do-db=replica
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: replica
-  
-  phpmyadmin:
-    image: phpmyadmin:latest
-    container_name: phpmyadmin
     ports:
-      - 8080:80
+      - "3307:3306"
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: phpmyadmin
     environment:
-      PMA_HOSTS: "mysql_master, mysql_slave" # NOMBRES DE LOS CONTENEDORES
-      PMA_ARBITRARY: 1 # ESPECIFICA LOS HOST A LOS QUE PHP PUEDE CONECTARSE
-    depends_on: # especifica que este servicio depende de los otros
-      - mysql_master
+      PMA_HOSTS: "mysql_master,mysql_slave"
+      PMA_ARBITRARY: 1 #Esta variable se utiliza para especificar los hosts de MySQL a los que phpMyAdmin puede conectarse.
+    depends_on:
+      - mysql_master #Especifica que este servicio depende de los servicios mysql_master y mysql_slave.
       - mysql_slave
-    
+    ports:
+      - "8080:80"
